@@ -1,0 +1,96 @@
+/*
+ * CSS for the Ahoi API admin pages.
+ *
+ * @version 1.0.1
+ */
+
+/* Main wrapper for a cleaner layout */
+.ahoi-api-wrap .postbox {
+    margin-top: 20px;
+}
+
+/* ========================================================================== */
+/* NEW: Bootstrap-like card header style for postbox titles                   */
+/* ========================================================================== */
+.ahoi-api-wrap .postbox .hndle {
+    /* Add padding to the title to create the header effect */
+    padding: 10px 15px;
+    /* Remove default margin to rely on padding */
+    margin: 0;
+    /* Make font size consistent and less overpowering */
+    font-size: 14px;
+    /* Add a separator line below the header */
+    border-bottom: 1px solid #ddd;
+}
+
+/* ========================================================================== */
+/* NEW: Consistent padding for the content area of all postboxes              */
+/* ========================================================================== */
+.ahoi-api-wrap .postbox .inside {
+    padding: 15px;
+    margin: 0;
+}
+
+
+/* Consistent forms */
+.ahoi-api-wrap .form-field {
+    margin-bottom: 20px;
+    /* Padding is now handled by the .inside container, so we remove it from here */
+}
+
+.ahoi-api-wrap .form-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.ahoi-api-wrap .form-field input[type="text"],
+.ahoi-api-wrap .form-field input[type="url"],
+.ahoi-api-wrap .form-field select {
+    width: 100%;
+    max-width: 400px;
+}
+
+.ahoi-api-wrap .form-field p.description {
+    font-style: italic;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Checkbox styling */
+.ahoi-api-wrap .form-field input[type="checkbox"] {
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+/* Table styling */
+.ahoi-api-wrap .wp-list-table {
+    margin-top: 0;
+}
+.ahoi-api-wrap .wp-list-table th,
+.ahoi-api-wrap .wp-list-table td {
+    padding: 12px 10px;
+}
+
+/* Make delete links more visible */
+.text-danger,
+.row-actions .delete a {
+    color: #d63638;
+}
+
+.row-actions .delete a:hover {
+    color: #a02324;
+}
+
+/* Two-column layout for builders */
+.ahoi-columns-2 {
+    display: grid;
+    grid-template-columns: 1fr; /* Default to single column on small screens */
+    gap: 20px;
+}
+
+@media (min-width: 850px) {
+    .ahoi-columns-2 {
+        grid-template-columns: 1fr 2fr; /* Two columns on larger screens */
+    }
+}

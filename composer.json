@@ -1,0 +1,22 @@
+{
+    "name": "stefan-iftimie/ahoi-api",
+    "description": "O soluție API headless pentru WordPress, ce permite crearea și managementul de endpoint-uri personalizate similar cu Supabase.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Stefan Iftimie",
+            "homepage": "https://www.ahoi.ro/"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "firebase/php-jwt": "^6.3",
+        "yahnis-elsts/plugin-update-checker": "^5.6"
+    },
+    "autoload": {
+        "classmap": [
+            "includes/"
+        ]
+    }
+}

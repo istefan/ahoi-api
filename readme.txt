@@ -3,7 +3,7 @@ Contributors: stefaniftimie
 Tags: api, rest api, headless, backend, crud, jwt, supabase, custom tables, database, webhooks, file storage
 Requires at least: 5.8
 Tested up to: 6.8
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -86,7 +86,10 @@ The standard API is excellent for interacting with posts and pages. Ahoi API ext
 
 == Changelog ==
 
-= 1.2.0 =
+= 1.2.1 =
+*   **Enhancement:** Added a `DELETE /users/{id}` endpoint to allow managers and administrators to delete users via the API.
+
+= 1.2.1 =
 *   **Enhancement:** Reworked the entire permission model for true headless architecture.
     *   Introduced a new `use_ahoi_api` capability, allowing any user role (including Subscriber) to perform basic API actions like file uploads and email sending. This capability is now granted to all standard roles on activation.
     *   Introduced a new `manage_ahoi_api_all_data` capability for 'Manager' and 'Administrator' roles, allowing them to view and manage data created by all users.

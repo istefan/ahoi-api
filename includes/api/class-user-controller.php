@@ -49,6 +49,30 @@ class User_Controller {
         $auth_controller = new Auth_Controller();
         return $auth_controller->register_user($request);
     }
+
+
+    /**
+     * Deletes a user.
+     */
+    public function delete_user(WP_REST_Request $request) {
+        if (!current_user_can('delete_users')) {
+            return new WP_Error('rest_forbidden', __('You cannot delete users.', 'ahoi-api'), ['status' => 403]);
+        }
+
+        $user_id = (int) $request['id'];
+
+        if (get_current_user_id() === $user_id) {
+            return new WP_Error('rest_cannot_delete_self', __('You cannot delete your own account.', 'ahoi-api'), ['status' => 403]);
+        }
+
+        // WordPress core function to delete a user
+        require_once(ABSPATH.'wp-admin/includes/user.php');
+        if (wp_delete_user($user_id)) {
+            return new WP_REST_Response(['success' => true, 'message' => 'User deleted successfully.'], 200);
+        } else {
+            return new WP_Error('rest_user_delete_failed', __('Failed to delete user.', 'ahoi-api'), ['status' => 500]);
+        }
+    }
     
     // --- NEW FUNCTION: GET A SINGLE USER ---
     /**

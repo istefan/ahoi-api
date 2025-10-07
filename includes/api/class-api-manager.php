@@ -120,6 +120,13 @@ class Api_Manager {
             'permission_callback' => [$auth_controller, 'validate_token_permission'],
         ]);
 
+        // NEW: Route to delete a single user by ID
+        register_rest_route($this->namespace, '/users/(?P<id>[\d]+)', [
+            'methods' => \WP_REST_Server::DELETABLE, // DELETE
+            'callback' => [$user_controller, 'delete_user'],
+            'permission_callback' => [$auth_controller, 'validate_token_permission'],
+        ]);
+
         register_rest_route($this->namespace, '/roles', [
             'methods'  => \WP_REST_Server::READABLE, // GET /roles
             'callback' => [$user_controller, 'get_roles'],

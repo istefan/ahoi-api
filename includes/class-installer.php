@@ -50,37 +50,35 @@ class Installer {
      * @access private
      */
     private static function create_manager_role() {
-        // Obținem rolul de Administrator
+        // Grant basic API access to all standard roles.
+        $roles_to_get_basic_access = ['subscriber', 'contributor', 'author', 'editor', 'administrator'];
+        foreach ($roles_to_get_basic_access as $role_name) {
+            $role = get_role($role_name);
+            if ($role) {
+                $role->add_cap('use_ahoi_api', true);
+            }
+        }
+
+        // Define Manager capabilities
+        $manager_capabilities = [
+            'read' => true,
+            'use_ahoi_api' => true, // Basic API access
+            'manage_ahoi_api_all_data' => true, // Power-user access
+            'send_api_emails' => true, // This can now be deprecated or kept for granularity
+        ];
+
+        // Create or update the Manager role
+        if (get_role('manager')) {
+            remove_role('manager'); // Remove to redefine cleanly
+        }
+        add_role('manager', __('Manager', 'ahoi-api'), $manager_capabilities);
+
+        // Ensure Admin also has manager capabilities
         $admin_role = get_role('administrator');
         if ($admin_role) {
+            $admin_role->add_cap('manage_ahoi_api_all_data', true);
             $admin_role->add_cap('send_api_emails', true);
         }
-        
-        // Verifică dacă rolul nu există deja pentru a evita suprascrierea.
-        if ( get_role( 'manager' ) ) {
-            // Dacă rolul există, doar adăugăm noua capabilitate.
-            $manager_role = get_role('manager');
-            $manager_role->add_cap('send_api_emails', true);
-            return;
-        }
-        
-        // Definirea capabilităților pe care le va avea Managerul.
-        $manager_capabilities = [
-            'read'         => true,  // Capabilitate de bază pentru a accesa panoul de control.
-            'list_users'   => true,  // Permite vizualizarea listei de utilizatori.
-            'create_users' => true,  // Permite crearea de utilizatori noi.
-            'edit_users'   => true,  // Permite editarea altor utilizatori și vizualizarea rolurilor.
-            'send_api_emails' => true,
-            // 'delete_users' => true, // O poți adăuga dacă vrei ca managerii să poată șterge useri.
-            // 'promote_users' => true, // O poți adăuga dacă vrei ca managerii să poată schimba roluri.
-        ];
-        
-        // Adaugă rolul în WordPress.
-        add_role(
-            'manager',                          // Numele (slug-ul) rolului
-            __( 'Manager', 'ahoi-api' ),        // Numele afișat (traductibil)
-            $manager_capabilities               // Lista de permisiuni
-        );
     }
 
     /**

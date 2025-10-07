@@ -52,13 +52,20 @@ class Dynamic_Crud_Controller {
         $table_name = $this->get_table_name_from_slug($structure['slug']);
         $current_user_id = get_current_user_id();
 
-        // SQL query now includes a WHERE clause to fetch only the user's own items.
-        $sql = $wpdb->prepare(
-            "SELECT * FROM `{$table_name}` WHERE owner_id = %d ORDER BY id DESC",
-            $current_user_id
-        );
+        // Check if the user is a manager who can see all data
+        if (current_user_can('manage_ahoi_api_all_data')) {
+            // Manager sees all items
+            $sql = "SELECT * FROM `{$table_name}` ORDER BY id DESC";
+            $items = $wpdb->get_results($sql);
+        } else {
+            // Regular user sees only their own items
+            $sql = $wpdb->prepare(
+                "SELECT * FROM `{$table_name}` WHERE owner_id = %d ORDER BY id DESC",
+                $current_user_id
+            );
+            $items = $wpdb->get_results($sql);
+        }
 
-        $items = $wpdb->get_results($sql);
         return new WP_REST_Response($items, 200);
     }
 

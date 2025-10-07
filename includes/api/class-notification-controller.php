@@ -24,7 +24,7 @@ class Notification_Controller {
         // Pasul 1: Validarea permisiunilor.
         // Doar anumite roluri ar trebui să poată trimite email-uri.
         // Vom folosi o capabilitate custom pe care o vom adăuga rolului de "Manager".
-        if ( ! current_user_can( 'send_api_emails' ) ) {
+        if (!current_user_can( 'use_ahoi_api' ) ) {
             return new WP_Error(
                 'rest_forbidden',
                 __( 'You do not have permission to send emails through the API.', 'ahoi-api' ),

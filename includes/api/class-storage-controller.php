@@ -23,7 +23,7 @@ class Storage_Controller {
     public function handle_upload( WP_REST_Request $request ) {
         // Pasul 1: Verifică dacă utilizatorul are dreptul de a încărca fișiere.
         // Aceasta este o capabilitate standard WordPress.
-        if ( ! current_user_can( 'upload_files' ) ) {
+        if (! current_user_can( 'use_ahoi_api' ) ) {
             return new WP_Error(
                 'rest_forbidden',
                 __( 'You do not have permission to upload files.', 'ahoi-api' ),

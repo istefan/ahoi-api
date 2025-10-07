@@ -32,37 +32,45 @@ if ( ! function_exists( 'ahoi_api_log' ) ) {
  * @param string $event Numele evenimentului (ex: 'item.created').
  * @param array|object $data Datele care vor fi trimise ca payload.
  */
-function ahoi_api_trigger_webhook( $event, $data ) {
+// in includes/helpers.php
+
+function ahoi_api_trigger_webhook($event, $data) {
     global $wpdb;
     $webhooks_table = $wpdb->prefix . 'ahoi_api_webhooks';
+    
+    $structure_slug = $data->slug ?? null; // Get slug from data if available
 
-    $active_webhooks = $wpdb->get_results( $wpdb->prepare(
-        "SELECT target_url FROM {$webhooks_table} WHERE event_name = %s AND status = 'active'",
-        $event
-    ) );
+    // NEW, more complex query:
+    // 1. Get webhooks for the specific event AND specific structure (e.g., event='item.created', structure='books')
+    // 2. Get webhooks for the specific event BUT with NO specific structure (global event)
+    $sql = $wpdb->prepare(
+        "SELECT target_url FROM {$webhooks_table} 
+         WHERE status = 'active' AND (
+            (event_name = %s AND structure_slug = %s) OR 
+            (event_name = %s AND structure_slug IS NULL)
+         )",
+        $event, $structure_slug, $event
+    );
 
-    if ( empty( $active_webhooks ) ) {
+    $active_webhooks = $wpdb->get_results($sql);
+    
+    if (empty($active_webhooks)) {
         return;
     }
 
-    // Extragem slug-ul structurii din date, dacă este posibil
-    $structure_slug = $data->slug ?? 'unknown';
-
-    // Construim payload-ul final
+    // Payload construction remains the same
     $payload = [
         'event'     => $event,
-        'structure' => $structure_slug,
+        'structure' => $structure_slug ?? 'unknown',
+        'timestamp' => current_time('timestamp', true),
         'data'      => $data,
-        'timestamp' => current_time('timestamp', true)
     ];
 
-    foreach ( $active_webhooks as $webhook ) {
-        // Programăm un eveniment care să ruleze IMEDIAT, o singură dată.
-        // WP-Cron nu este perfect instantaneu, dar este cea mai bună opțiune nativă.
-        wp_schedule_single_event( time(), 'ahoi_api_send_webhook_event', [
+    foreach ($active_webhooks as $webhook) {
+        wp_schedule_single_event(time(), 'ahoi_api_send_webhook_event', [
             'target_url' => $webhook->target_url,
             'payload'    => $payload,
-        ] );
+        ]);
     }
 }
 

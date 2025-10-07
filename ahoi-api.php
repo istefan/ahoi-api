@@ -3,7 +3,7 @@
  * Plugin Name:       Ahoi API
  * Plugin URI:        https://www.ahoi.ro/
  * Description:       A headless API solution for WordPress, allowing the creation and management of custom endpoints similar to Supabase.
- * Version:           1.3.0
+ * Version:           1.4.0
  * Author:            Stefan Iftimie
  * Author URI:        https://www.ahoi.ro/
  * License:           GPL v2 or later
@@ -57,7 +57,7 @@ $myUpdateChecker = PucFactory::buildUpdateChecker(
 /**
  * Define the main plugin constants.
  */
-define( 'AHOI_API_VERSION', '1.3.0' );
+define( 'AHOI_API_VERSION', '1.4.0' );
 define( 'AHOI_API_FILE', __FILE__ );
 define( 'AHOI_API_PATH', dirname( AHOI_API_FILE ) );
 define( 'AHOI_API_URL', plugins_url( '', AHOI_API_FILE ) );

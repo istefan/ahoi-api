@@ -106,8 +106,9 @@ class Installer {
         // NOU: Schema SQL pentru tabelul de webhooks
         $sql_webhooks = "CREATE TABLE $table_webhooks (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-            event_name VARCHAR(100) NOT NULL,
             target_url VARCHAR(255) NOT NULL,
+            event_name VARCHAR(100) NOT NULL,
+            structure_slug VARCHAR(100) NULL,
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             created_at DATETIME NOT NULL,
             PRIMARY KEY  (id),

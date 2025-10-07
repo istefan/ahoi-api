@@ -24,8 +24,9 @@ if (!defined('ABSPATH')) {
  *
  * SECURITY MODEL:
  * 1. A valid JWT is required for all actions. This authenticates the user.
- * 2. Data access is restricted based on ownership. Users can only view,
- *    update, or delete items they have created (via the `owner_id` column).
+ * 2. Data access is restricted based on ownership unless the user has 'manage_ahoi_api_all_data' capability.
+ *    - Regular users can only view, update, or delete items they have created (via the `owner_id` column).
+ *    - Managers/Admins can view, update, or delete ANY item.
  */
 class Dynamic_Crud_Controller {
 
@@ -38,27 +39,26 @@ class Dynamic_Crud_Controller {
     public function update_item_permissions_check(WP_REST_Request $request) { return $this->check_jwt_permission($request); }
     public function delete_item_permissions_check(WP_REST_Request $request) { return $this->check_jwt_permission($request); }
 
-
     // --- CRUD CALLBACK METHODS ---
 
     /**
-     * Retrieves a list of items owned by the current user.
+     * Retrieves a list of items. Managers see all items; regular users see only their own.
      */
     public function get_items(WP_REST_Request $request) {
         $structure = $this->get_structure_details($request);
-        if (is_wp_error($structure)) return $structure;
+        if (is_wp_error($structure)) {
+            return $structure;
+        }
 
         global $wpdb;
         $table_name = $this->get_table_name_from_slug($structure['slug']);
-        $current_user_id = get_current_user_id();
-
-        // Check if the user is a manager who can see all data
+        
+        // MODIFIED LOGIC: Allow managers to see all items.
         if (current_user_can('manage_ahoi_api_all_data')) {
-            // Manager sees all items
             $sql = "SELECT * FROM `{$table_name}` ORDER BY id DESC";
             $items = $wpdb->get_results($sql);
         } else {
-            // Regular user sees only their own items
+            $current_user_id = get_current_user_id();
             $sql = $wpdb->prepare(
                 "SELECT * FROM `{$table_name}` WHERE owner_id = %d ORDER BY id DESC",
                 $current_user_id
@@ -70,28 +70,33 @@ class Dynamic_Crud_Controller {
     }
 
     /**
-     * Retrieves a single item by ID, but only if it is owned by the current user.
+     * Retrieves a single item by ID. Managers can retrieve any item; regular users only their own.
      */
     public function get_item(WP_REST_Request $request) {
         $structure = $this->get_structure_details($request);
-        if (is_wp_error($structure)) return $structure;
-        
+        if (is_wp_error($structure)) {
+            return $structure;
+        }
+
         $id = (int) $request['id'];
         global $wpdb;
         $table_name = $this->get_table_name_from_slug($structure['slug']);
-        $current_user_id = get_current_user_id();
-        
-        // The query now checks both the item ID and the owner ID.
-        $item = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM `{$table_name}` WHERE id = %d AND owner_id = %d",
-            $id,
-            $current_user_id
-        ));
-        
+
+        // MODIFIED LOGIC: Allow managers to get any item.
+        if (current_user_can('manage_ahoi_api_all_data')) {
+            $item = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$table_name}` WHERE id = %d", $id));
+        } else {
+            $current_user_id = get_current_user_id();
+            $item = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM `{$table_name}` WHERE id = %d AND owner_id = %d",
+                $id,
+                $current_user_id
+            ));
+        }
+
         if (!$item) {
             return new WP_Error('ahoi_api_not_found', __('Item not found or you do not have permission to view it.', 'ahoi-api'), ['status' => 404]);
         }
-        
         return new WP_REST_Response($item, 200);
     }
 
@@ -113,15 +118,17 @@ class Dynamic_Crud_Controller {
         $validated_data['updated_at'] = current_time('mysql', 1);
 
         $result = $wpdb->insert($table_name, $validated_data);
-        if (false === $result) return new WP_Error('ahoi_api_db_error', __('Could not insert item.', 'ahoi-api'), ['status' => 500]);
-        
+        if (false === $result) {
+            return new WP_Error('ahoi_api_db_error', __('Could not insert item.', 'ahoi-api'), ['status' => 500]);
+        }
+
         $new_item_id = $wpdb->insert_id;
         $new_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$table_name}` WHERE id = %d", $new_item_id));
         return new WP_REST_Response($new_item, 201);
     }
 
     /**
-     * Updates an existing item, but only if it is owned by the current user.
+     * Updates an existing item. Managers can update any item; regular users only their own.
      */
     public function update_item(WP_REST_Request $request) {
         $structure = $this->get_structure_details($request);
@@ -130,28 +137,32 @@ class Dynamic_Crud_Controller {
         $id = (int) $request['id'];
         global $wpdb;
         $table_name = $this->get_table_name_from_slug($structure['slug']);
-        $current_user_id = get_current_user_id();
 
-        // First, verify ownership.
-        $owner_id = $wpdb->get_var($wpdb->prepare("SELECT owner_id FROM `{$table_name}` WHERE id = %d", $id));
-        if ($owner_id != $current_user_id) {
-            return new WP_Error('rest_forbidden', __('You do not have permission to modify this item.', 'ahoi-api'), ['status' => 403]);
+        // MODIFIED LOGIC: Bypass ownership check for managers.
+        if (!current_user_can('manage_ahoi_api_all_data')) {
+            $owner_id = $wpdb->get_var($wpdb->prepare("SELECT owner_id FROM `{$table_name}` WHERE id = %d", $id));
+            if (!$owner_id || $owner_id != get_current_user_id()) {
+                return new WP_Error('rest_forbidden', __('You do not have permission to modify this item.', 'ahoi-api'), ['status' => 403]);
+            }
         }
 
         $params = $request->get_json_params();
         $validated_data = $this->validate_and_sanitize_params($params, $structure['fields'], 'update');
         if (is_wp_error($validated_data)) return $validated_data;
-        if (empty($validated_data)) return new WP_Error('ahoi_api_bad_request', __('No valid data provided for update.', 'ahoi-api'), ['status' => 400]);
+
+        if (empty($validated_data)) {
+            return new WP_Error('ahoi_api_bad_request', __('No valid data provided for update.', 'ahoi-api'), ['status' => 400]);
+        }
 
         $validated_data['updated_at'] = current_time('mysql', 1);
         $wpdb->update($table_name, $validated_data, ['id' => $id]);
-        
+
         $updated_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$table_name}` WHERE id = %d", $id));
         return new WP_REST_Response($updated_item, 200);
     }
 
     /**
-     * Deletes an item, but only if it is owned by the current user.
+     * Deletes an item. Managers can delete any item; regular users only their own.
      */
     public function delete_item(WP_REST_Request $request) {
         $structure = $this->get_structure_details($request);
@@ -160,20 +171,22 @@ class Dynamic_Crud_Controller {
         $id = (int) $request['id'];
         global $wpdb;
         $table_name = $this->get_table_name_from_slug($structure['slug']);
-        $current_user_id = get_current_user_id();
-        
-        // First, verify ownership.
-        $owner_id = $wpdb->get_var($wpdb->prepare("SELECT owner_id FROM `{$table_name}` WHERE id = %d", $id));
-        if ($owner_id != $current_user_id) {
-            return new WP_Error('rest_forbidden', __('You do not have permission to delete this item.', 'ahoi-api'), ['status' => 403]);
+
+        // MODIFIED LOGIC: Bypass ownership check for managers.
+        if (!current_user_can('manage_ahoi_api_all_data')) {
+            $owner_id = $wpdb->get_var($wpdb->prepare("SELECT owner_id FROM `{$table_name}` WHERE id = %d", $id));
+            if (!$owner_id || $owner_id != get_current_user_id()) {
+                return new WP_Error('rest_forbidden', __('You do not have permission to delete this item.', 'ahoi-api'), ['status' => 403]);
+            }
         }
 
         $result = $wpdb->delete($table_name, ['id' => $id]);
-        if (!$result) return new WP_Error('ahoi_api_not_found', __('Item not found or could not be deleted.', 'ahoi-api'), ['status' => 404]);
-        
+
+        if (!$result) {
+            return new WP_Error('ahoi_api_not_found', __('Item not found or could not be deleted.', 'ahoi-api'), ['status' => 404]);
+        }
         return new WP_REST_Response(['success' => true, 'message' => 'Item deleted.'], 200);
     }
-
 
     // --- HELPER METHODS ---
 
@@ -214,7 +227,7 @@ class Dynamic_Crud_Controller {
         $auth_controller = new Auth_Controller();
         return $auth_controller->validate_token_permission($request);
     }
-    
+
     private function get_table_name_from_slug($slug) {
         global $wpdb;
         $safe_slug = preg_replace('/[^a-zA-Z0-9_]/', '', $slug);
@@ -222,20 +235,26 @@ class Dynamic_Crud_Controller {
     }
 
     private function get_structure_details(WP_REST_Request $request) {
-        if ($this->current_structure !== null) return $this->current_structure;
+        if ($this->current_structure !== null && $this->current_structure['slug'] === ($request->get_url_params()['slug'] ?? null)) {
+            return $this->current_structure;
+        }
 
         $route = $request->get_route();
         $parts = explode('/', trim($route, '/'));
         $slug = $parts[2] ?? null;
 
-        if (!$slug) return new WP_Error('ahoi_api_invalid_route', __('Could not determine structure from route.', 'ahoi-api'), ['status' => 500]);
-        
+        if (!$slug) {
+            return new WP_Error('ahoi_api_invalid_route', __('Could not determine structure from route.', 'ahoi-api'), ['status' => 500]);
+        }
+
         global $wpdb;
         $structures_table = $wpdb->prefix . 'ahoi_api_structures';
         $fields_table = $wpdb->prefix . 'ahoi_api_fields';
-        
+
         $structure = $wpdb->get_row($wpdb->prepare("SELECT id, slug FROM `{$structures_table}` WHERE slug = %s", $slug), ARRAY_A);
-        if (!$structure) return new WP_Error('ahoi_api_structure_not_found', __('Structure not found.', 'ahoi-api'), ['status' => 404]);
+        if (!$structure) {
+            return new WP_Error('ahoi_api_structure_not_found', __('Structure not found.', 'ahoi-api'), ['status' => 404]);
+        }
 
         $structure['fields'] = $wpdb->get_results($wpdb->prepare("SELECT * FROM `{$fields_table}` WHERE structure_id = %d", $structure['id']));
 

@@ -126,6 +126,7 @@ class Auth_Controller {
                 'id'           => $user->ID,
                 'email'        => $user->user_email,
                 'display_name' => $user->display_name,
+                'roles'        => $user->roles,
             ],
         ], 200 );
     }

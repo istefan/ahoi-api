@@ -3,7 +3,7 @@ Contributors: stefaniftimie
 Tags: api, rest api, headless, backend, crud, jwt, supabase, custom tables, database, webhooks, file storage
 Requires at least: 5.8
 Tested up to: 6.8
-Stable tag: 1.1.3
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,6 +85,13 @@ The standard API is excellent for interacting with posts and pages. Ahoi API ext
 4.  The "Help / Docs" page, which provides a complete user guide for administrators.
 
 == Changelog ==
+
+= 1.2.0 =
+*   **Enhancement:** Reworked the entire permission model for true headless architecture.
+    *   Introduced a new `use_ahoi_api` capability, allowing any user role (including Subscriber) to perform basic API actions like file uploads and email sending. This capability is now granted to all standard roles on activation.
+    *   Introduced a new `manage_ahoi_api_all_data` capability for 'Manager' and 'Administrator' roles, allowing them to view and manage data created by all users.
+*   **Fix:** The authentication endpoint (`/token`) now correctly includes user roles in the login response, enabling role-based logic in client applications.
+*   **Fix:** Resolved a critical activation error on Windows servers by correcting file path construction to be cross-platform compatible.
 
 = 1.0.0 =
 *   Initial release of the plugin.

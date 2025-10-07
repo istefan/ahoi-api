@@ -125,7 +125,7 @@ class Admin_Menu {
     public function render_table_builder_page() {
         // We load a "view" file which contains the HTML.
         // This is good practice to separate logic from display.
-        require_once AHOI_API_PATH . '/includes/admin/views/view-table-builder.php';
+        require_once AHOI_API_PATH . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . 'view-table-builder.php';
     }
 
     /**
@@ -134,7 +134,7 @@ class Admin_Menu {
      * @since 1.0.0
      */
     public function render_settings_page() {
-        require_once AHOI_API_PATH . '/includes/admin/views/view-settings.php';
+        require_once AHOI_API_PATH . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . 'view-settings.php';
     }
 
     /**
@@ -143,6 +143,6 @@ class Admin_Menu {
      * @since 1.0.0
      */
     public function render_help_page() {
-        require_once AHOI_API_PATH . '/includes/admin/views/view-help-page.php';
+        require_once AHOI_API_PATH . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . 'view-help-page.php';
     }
 }

@@ -3,7 +3,7 @@
  * Plugin Name:       Ahoi API
  * Plugin URI:        https://www.ahoi.ro/
  * Description:       A headless API solution for WordPress, allowing the creation and management of custom endpoints similar to Supabase.
- * Version:           1.1.0
+ * Version:           1.1.1
  * Author:            Stefan Iftimie
  * Author URI:        https://www.ahoi.ro/
  * License:           GPL v2 or later
@@ -57,18 +57,18 @@ $myUpdateChecker = PucFactory::buildUpdateChecker(
 /**
  * Define the main plugin constants.
  */
-define( 'AHOI_API_VERSION', '1.1.0' );
+define( 'AHOI_API_VERSION', '1.1.1' );
 define( 'AHOI_API_FILE', __FILE__ );
 define( 'AHOI_API_PATH', dirname( AHOI_API_FILE ) );
 define( 'AHOI_API_URL', plugins_url( '', AHOI_API_FILE ) );
-define( 'AHOI_API_INCLUDES', AHOI_API_PATH . '/includes' );
+define( 'AHOI_API_INCLUDES', AHOI_API_PATH . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR );
 
 /**
  * Load the plugin's base files.
  */
-require_once AHOI_API_INCLUDES . '/class-ahoi-api.php';
-require_once AHOI_API_INCLUDES . '/class-installer.php';
-require_once AHOI_API_INCLUDES . '/helpers.php';
+require_once AHOI_API_INCLUDES . 'class-ahoi-api.php';
+require_once AHOI_API_INCLUDES . 'class-installer.php';
+require_once AHOI_API_INCLUDES . 'helpers.php';
 
 /**
  * The main function that returns the Ahoi_API class instance (Singleton).

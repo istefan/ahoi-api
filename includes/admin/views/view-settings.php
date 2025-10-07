@@ -52,7 +52,7 @@ $available_events = [
     'item.created' => 'Item Created',
     'item.updated' => 'Item Updated',
     'item.deleted' => 'Item Deleted',
-    'user.created' => 'User Created (Future Implementation)',
+    'user.created' => 'User Created',
 ];
 
 // ==========================================================================

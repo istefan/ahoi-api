@@ -9,7 +9,7 @@
 **Tags:** api, rest api, headless, backend, crud, jwt, supabase, custom fields, database, webhooks, file storage  
 **Requires at least:** 5.8  
 **Tested up to:** 6.8  
-**Stable tag:** 1.2.5  
+**Stable tag:** 1.3.0  
 **License:** GPLv2 or later  
 **License URI:** https://www.gnu.org/licenses/gpl-2.0.html
 

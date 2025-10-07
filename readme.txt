@@ -3,7 +3,7 @@ Contributors: stefaniftimie
 Tags: api, rest api, headless, backend, crud, jwt, supabase, custom tables, database, webhooks, file storage
 Requires at least: 5.8
 Tested up to: 6.8
-Stable tag: 1.2.5
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -101,6 +101,12 @@ The standard API is excellent for interacting with posts and pages. Ahoi API ext
 4.  The "Help / Docs" page, which provides a complete user guide for administrators.
 
 == Changelog ==
+
+= 1.3.0 =
+*   **Enhancement:** The `user.created` webhook is now fully functional. The API now triggers this event upon successful user registration, sending the new user's data to the configured Target URL.
+
+= 1.2.5 =
+*   **Docs:** Complete rewrite of README.md and readme.txt for clarity, including detailed explanations of the permission model.
 
 = 1.2.4 =
 *   **Security Fix:** Implemented strict role hierarchy checks in the user management API.

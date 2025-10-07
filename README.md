@@ -9,7 +9,7 @@
 **Tags:** api, rest api, headless, backend, crud, jwt, supabase, custom fields, database, webhooks, file storage  
 **Requires at least:** 5.8  
 **Tested up to:** 6.8  
-**Stable tag:** 1.2.4  
+**Stable tag:** 1.2.5  
 **License:** GPLv2 or later  
 **License URI:** https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,93 +25,117 @@ It's the perfect solution to power external applications (SPAs with React/Vue, m
 
 ### Core Features
 
-- **Visual Table Builder:** Create custom database tables and define fields with various data types (Text, Number, Boolean, Date, Relationship, JSON) directly from the WP admin.
-- **Automatic API Generation:** Every table you create instantly becomes a full CRUD REST API endpoint (e.g., `/wp-json/ahoi/v1/movies`).
-- **Modern JWT Authentication:** Secure your API with JSON Web Tokens, the standard for stateless applications.
-- **Granular Access Control:** Integrates seamlessly with WordPress Roles & Capabilities. Define exactly which user roles can create, read, update, or delete data.
-- **File Storage Management:** Secure endpoints for file uploads and deletions, fully integrated with the WordPress Media Library.
-- **Webhooks:** Notify external systems in real-time when data is created, updated, or deleted, enabling powerful and decoupled integrations.
-- **Advanced Querying:** Native support for filtering, sorting, and pagination directly via URL parameters.
-- **CORS Configuration:** Easily and securely grant access to your browser-based applications from other domains.
-- **Integrated User Guide:** A complete guide for administrators is available directly within the plugin.
+-   **Visual Table Builder:** Create custom database tables and define fields with various data types (Text, Number, Boolean, Date, Relationship, JSON) directly from the WP admin.
+-   **Automatic API Generation:** Every table you create instantly becomes a full CRUD REST API endpoint (e.g., `/wp-json/ahoi/v1/movies`).
+-   **Modern JWT Authentication:** Secure your API with JSON Web Tokens, the standard for stateless applications.
+-   **Granular, Role-Based Access Control:** Ahoi API introduces a custom, two-tiered capability system that gives you fine-grained control over your data. It automatically creates a pre-configured 'Manager' role, and you can define exactly who can create, read, update, or delete data.
+-   **File Storage Management:** Secure endpoints for file uploads and deletions, fully integrated with the WordPress Media Library.
+-   **Webhooks:** Notify external systems in real-time when data is created, updated, or deleted, enabling powerful and decoupled integrations.
+-   **Advanced Querying:** Native support for filtering, sorting, and pagination directly via URL parameters.
+-   **CORS Configuration:** Easily and securely grant access to your browser-based applications from other domains.
+-   **Integrated User Guide & Auto-Updates:** A complete guide for administrators is available directly within the plugin, and you can receive updates directly from GitHub.
 
 ---
 
-## Getting Started & SDKs
+## Installation
 
-While you can interact with the API using any HTTP client, we provide a simple PHP SDK to accelerate the development of your PHP applications.
+#### Method 1: Upload from WordPress Admin (Recommended)
 
-- **PHP SDK:** You can find the official PHP SDK and usage examples at its dedicated repository:
-  **[https://github.com/istefan/ahoi-api-sdk](https://github.com/istefan/ahoi-api-sdk)**
+1.  Download the latest release `.zip` file from the [GitHub Releases page](https://github.com/istefan/ahoi-api/releases).
+2.  From your WordPress admin panel, navigate to `Plugins` > `Add New`.
+3.  Click the `Upload Plugin` button and select the `.zip` file you downloaded.
+4.  After installation, click `Activate Plugin`.
 
-**Example: Using the PHP SDK**
-```php
-require_once 'ahoi-sdk.php';
+#### Method 2: Manual (via FTP)
 
-// Initialize the client with the URL of your WordPress site
-$client = new AhoiAPIClient('https://your-wordpress-site.com');
+1.  Download and unzip the latest release.
+2.  Upload the `ahoi-api` folder to the `/wp-content/plugins/` directory on your server.
+3.  From your WordPress admin panel, navigate to `Plugins` and activate the "Ahoi API" plugin.
 
-// Authenticate as a user
-if ($client->login('manager_user', 'password')) {
-    // Fetch the top 5 rated movies
-    $response = $client->get('/movies', ['_sort' => 'rating', '_order' => 'desc', '_limit' => 5]);
+**Important:** If you clone the repository directly from GitHub, you must run `composer install` inside the plugin directory to install the required dependencies.
 
-    if ($response['status_code'] === 200) {
-        print_r($response['data']);
-    }
-}
-```
+---
+
+## User & Role Management (Crucial!)
+
+Ahoi API extends the WordPress user system with custom capabilities to provide secure, granular access to the API.
+
+### Custom Capabilities Explained
+
+| Capability                 | Granted To                               | Permissions                                                                                                         |
+| -------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `use_ahoi_api`             | All standard roles (on activation)       | **Basic API Access.** Allows users to log in, manage their **own** data entries, upload files, and send emails.          |
+| `manage_ahoi_api_all_data` | Administrator, Manager                   | **Power-User Data Access.** Allows users to view, edit, and delete data entries created by **any** user.                |
+| `manage_api_users`         | Administrator, Manager                   | **User Management Access.** Allows users to access the `/users` and `/roles` endpoints to manage other users.         |
+
+### Role Breakdown
+
+#### Administrator
+-   Has full control over the WordPress site and all Ahoi API features.
+-   Can view, edit, and delete all data and all users (except themselves).
+-   Is the only role that can delete other users via the API.
+
+#### Manager
+-   A custom role created by Ahoi API upon activation.
+-   **Designed for application-level administrators.**
+-   Can create, view, and edit other users, but **cannot view or edit Administrator accounts**.
+-   **Cannot delete users.**
+-   When creating or editing users, their list of assignable roles is filtered to exclude high-level WordPress roles (like Administrator), preventing privilege escalation.
+
+#### Subscriber (or other regular roles)
+-   Can only interact with their **own data**.
+-   They can create a "book" and will only be able to see and edit the books they created.
+-   They cannot access user management endpoints.
 
 ---
 
 ## How to Use Ahoi API (Admin Guide)
 
-After installing and activating the plugin, you will find a new "Ahoi API" menu in your WordPress admin sidebar.
+After activating the plugin, you will find a new "Ahoi API" menu in your WordPress admin sidebar.
 
 ### 1. The Table Builder
-
-This is where you define the data models for your application.
+This is where you define your application's data models. Each table you create here will automatically get its own set of API endpoints.
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/istefan/ahoi-api/main/assets/images/screenshot-1.png" alt="Ahoi API Table Builder">
 </p>
 
-- **Create a Table:** In the "Add New Table" box, provide a user-friendly name (e.g., `Products`) and a URL-friendly slug (e.g., `products`). The slug is used in the API URL.
-- **Add Fields:** Click on a table name in the "Existing Tables" list to manage its fields. Here you define the columns for your table, such as `product_name` (Text), `price` (Number, decimal), and `in_stock` (Boolean).
-
-<p align="center">
-<img src="https://raw.githubusercontent.com/istefan/ahoi-api/main/assets/images/screenshot-2.png" alt="Editing Fields for a Table">
-</p>
-
 ### 2. The Settings Page
-
-This page is for configuring security and integrations.
+This page is for configuring security (CORS) and integrations (Webhooks).
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/istefan/ahoi-api/main/assets/images/screenshot-3.png" alt="Ahoi API Settings Page">
 </p>
 
-- **CORS Settings:** If you are building a web application (e.g., with React) that runs on a different domain, you must add its URL here. This tells the browser that it's safe to allow your web app to fetch data from the API.
-- **Webhooks:** Configure URLs of external services that should be notified when events occur in your API. For example, you can set up a webhook to notify a Slack channel every time a new item is created.
+---
+
+## SDKs & Code Examples
+
+To get started quickly, we provide an official PHP SDK with a full demo application.
+
+-   **PHP SDK Repository:** **[https://github.com/istefan/ahoi-api-sdk](https://github.com/istefan/ahoi-api-sdk)**
+
+The SDK repository contains detailed examples for every feature, from authentication to file uploads.
 
 ---
 
-## User & Role Management
+## Frequently Asked Questions
 
-Ahoi API leverages the powerful WordPress user system to control API access.
+**1. What is the difference between Ahoi API and the standard WordPress REST API?**
 
-### Administrator vs. Manager Roles
+The standard REST API is excellent for interacting with posts, pages, and their metadata. Ahoi API extends this by allowing you to:
+-   Create completely **custom data structures in dedicated SQL tables**, which is more performant and scalable than using posts with custom fields.
+-   Manage everything from a **visual interface** without writing PHP code to register routes.
+-   Benefit from advanced, built-in features like **JWT authentication, Webhooks, and a dedicated File Storage API** out of the box.
 
-- **Administrator:** Has full control over the WordPress site, including all Ahoi API settings. This role is for site owners and super-admins.
-- **Manager:** Ahoi API automatically creates a "Manager" role upon activation. This role is specifically designed for users who need to manage application users via the API but should not have full control over the WordPress site.
+**2. How secure is the generated API?**
 
-### Workflow for Managing Users from an External App
+Security is a central pillar of the plugin:
+-   **JWT Authentication:** No data endpoints can be accessed without a valid token.
+-   **Ownership Policy:** By default, users can only access and modify the data they have created.
+-   **Role Hierarchy:** The API enforces strict rules, preventing lower-level roles (like Manager) from editing higher-level roles (Administrator).
+-   **Sanitization:** All data received via the API is validated and sanitized before being saved.
 
-1.  **Assign the Role:** In the WordPress admin panel, create a new user and assign them the **"Manager"** role.
-2.  **Authenticate in App:** In your external application (e.g., a PHP admin panel), this Manager user logs in via the `/token` endpoint.
-3.  **Perform Admin Actions:** The JWT token received belongs to a Manager. Your app can now use this token to make authorized API calls to endpoints like:
-    - `GET /users` - to fetch a list of all users.
-    - `POST /users` - to create a new user.
-    - `GET /roles` - to get a list of available roles to display in a dropdown.
+**3. Does this affect my website's front-end performance?**
 
-A regular user (e.g., with a "Subscriber" role) attempting to access these endpoints will receive a `403 Forbidden` error, ensuring your user management is secure. For more granular control, we recommend the [User Role Editor](https://wordpress.org/plugins/user-role-editor/) plugin.
+No. The plugin's logic is primarily activated on requests to its API namespace (`/wp-json/ahoi/v1/...`) and within its admin pages. It adds no extra load to the public-facing front-end of your WordPress site.

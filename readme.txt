@@ -3,7 +3,7 @@ Contributors: stefaniftimie
 Tags: api, rest api, headless, backend, crud, jwt, supabase, custom tables, database, webhooks, file storage
 Requires at least: 5.8
 Tested up to: 6.8
-Stable tag: 1.2.4
+Stable tag: 1.2.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,7 +20,7 @@ It is the perfect solution for powering external applications (PHP, JavaScript, 
 *   **Visual Table Builder:** Create "tables" and "fields" directly from the admin, defining various data types (Text, Number, Boolean, Date, Relationship, JSON).
 *   **Automatic API Generation:** Each table you create instantly becomes a fully functional REST API endpoint (e.g., `/wp-json/ahoi/v1/products`).
 *   **Modern JWT Authentication:** Secure your API using JSON Web Tokens, the standard for stateless applications.
-*   **Granular Access Control:** Integrates seamlessly with the WordPress Roles and Capabilities system. You can define exactly which role can create, edit, or delete data.
+*   **Granular, Role-Based Access Control:** Ahoi API introduces a custom, two-tiered capability system that gives you fine-grained control over your data.
 *   **File Storage Management:** Includes secure endpoints for file uploads and deletions, integrated with the WordPress Media Library.
 *   **Webhooks:** Notify external systems in real-time when data is created, updated, or deleted, allowing for complex and decoupled integrations.
 *   **Advanced Querying:** Native support for filtering, sorting, and pagination directly via URL parameters.
@@ -52,6 +52,22 @@ Whether you are building a Single Page Application (SPA), a mobile app, or a mic
 
 After activation, you will find a new "Ahoi API" menu in the admin sidebar. From here, you can start building your data tables.
 
+== User & Role Management ==
+
+Ahoi API extends the WordPress user system with custom capabilities to provide secure, granular access to the API.
+
+= Custom Capabilities Explained =
+
+*   `use_ahoi_api`: **Basic API Access.** Granted to all standard roles on activation. Allows users to log in, manage their **own** data entries, upload files, and send emails.
+*   `manage_ahoi_api_all_data`: **Power-User Data Access.** Granted to Administrators and Managers. Allows users to view, edit, and delete data entries created by **any** user.
+*   `manage_api_users`: **User Management Access.** Granted to Administrators and Managers. Allows users to access the `/users` and `/roles` endpoints to manage other users.
+
+= Role Breakdown =
+
+*   **Administrator:** Has full control over the WordPress site and all Ahoi API features. Can view, edit, and delete all data and all users (except themselves). This is the only role that can delete other users.
+*   **Manager:** A custom role created by Ahoi API. This role is for application-level administrators. They can create, view, and edit other users, but **cannot** view or edit Administrator accounts. They also cannot delete users.
+*   **Subscriber (or other regular roles):** Can only interact with their **own data**. They cannot access user management endpoints.
+
 == Frequently Asked Questions ==
 
 = What is a headless API and why should I use Ahoi API? =
@@ -62,9 +78,9 @@ A "headless" API means that WordPress only manages the data (the backend), while
 
 Very secure. Security is a central pillar of the plugin:
 1.  **JWT Authentication:** No data endpoints can be accessed without a valid token.
-2.  **WordPress Permissions:** It relies on the native Roles and Capabilities system. You can define exactly what actions each user role can perform.
-3.  **Sanitization:** All data received via the API is validated and sanitized before being saved, preventing attacks like SQL Injection.
-4.  **CORS:** Only the domains you explicitly approve can make requests from a browser.
+2.  **Ownership & Role Permissions:** The API uses a robust capability system. Regular users can only access their own data, while Managers and Admins have elevated privileges.
+3.  **Role Hierarchy:** The API enforces strict rules, preventing lower-level roles (like Manager) from editing higher-level roles (Administrator).
+4.  **Sanitization:** All data received via the API is validated and sanitized before being saved, preventing attacks like SQL Injection.
 
 = Does this affect my website's performance? =
 
@@ -112,16 +128,6 @@ The standard API is excellent for interacting with posts and pages. Ahoi API ext
 
 = 1.0.0 =
 *   Initial release of the plugin.
-*   Features included:
-    *   Visual builder for data tables and fields.
-    *   Automatic generation of CRUD REST API endpoints.
-    *   Secure authentication with JSON Web Tokens (JWT).
-    *   Integration with WordPress Roles & Capabilities, including a pre-configured 'Manager' role.
-    *   File management (upload/delete) via API, integrated with the Media Library.
-    *   Webhook system for real-time notifications.
-    *   Configuration pages for CORS and Webhooks.
-    *   Integrated user guide and developer documentation.
-    *   Self-updating functionality via GitHub.
 
 == Upgrade Notice ==
 

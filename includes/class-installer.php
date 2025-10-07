@@ -62,9 +62,13 @@ class Installer {
         // Define Manager capabilities
         $manager_capabilities = [
             'read' => true,
-            'use_ahoi_api' => true, // Basic API access
-            'manage_ahoi_api_all_data' => true, // Power-user access
-            'send_api_emails' => true, // This can now be deprecated or kept for granularity
+            'list_users' => true,
+            'create_users' => true,
+            'edit_users' => true,
+            'use_ahoi_api' => true,
+            'manage_ahoi_api_all_data' => true,
+            'send_api_emails' => true,
+            'manage_api_users' => true, // <-- NEW CAPABILITY
         ];
 
         // Create or update the Manager role
@@ -78,6 +82,7 @@ class Installer {
         if ($admin_role) {
             $admin_role->add_cap('manage_ahoi_api_all_data', true);
             $admin_role->add_cap('send_api_emails', true);
+            $admin_role->add_cap('manage_api_users', true);
         }
     }
 

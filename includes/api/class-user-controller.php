@@ -16,18 +16,23 @@ use WP_Error;
 class User_Controller {
 
     /**
-     * Retrieves a list of all users.
-     * Requires the custom 'manage_api_users' capability.
+     * Retrieves a list of users.
+     * Non-admins will not see administrator accounts in the list.
      */
     public function get_users(WP_REST_Request $request) {
-        // MODIFIED: Use our custom capability
         if (!current_user_can('manage_api_users')) {
             return new WP_Error('rest_forbidden', __('You cannot view users.', 'ahoi-api'), ['status' => 403]);
         }
         
         $all_users = get_users();
         $response_data = [];
+
         foreach ($all_users as $user) {
+            // SECURITY: If the current user is NOT an admin, do not show other admins in the list.
+            if (!current_user_can('administrator') && in_array('administrator', $user->roles)) {
+                continue; // Skip this administrator and go to the next user
+            }
+
             $response_data[] = [
                 'ID'           => $user->ID,
                 'user_login'   => $user->user_login,
@@ -41,12 +46,17 @@ class User_Controller {
 
     /**
      * Creates a new user.
-     * This endpoint is a proxy for the register_user method but secured with 'manage_api_users'.
+     * Prevents non-admins from creating admin accounts.
      */
     public function create_user(WP_REST_Request $request) {
-        // MODIFIED: Use our custom capability
         if (!current_user_can('manage_api_users')) {
             return new WP_Error('rest_forbidden', __('You cannot create users.', 'ahoi-api'), ['status' => 403]);
+        }
+
+        // SECURITY: Prevent a non-admin from creating an admin user.
+        $params = $request->get_params();
+        if (isset($params['role']) && $params['role'] === 'administrator' && !current_user_can('administrator')) {
+            return new WP_Error('rest_forbidden', __('You do not have permission to create administrator accounts.', 'ahoi-api'), ['status' => 403]);
         }
         
         $auth_controller = new Auth_Controller();
@@ -55,6 +65,7 @@ class User_Controller {
 
     /**
      * Retrieves a single user's data by their ID.
+     * Prevents non-admins from viewing admin profiles.
      */
     public function get_user(WP_REST_Request $request) {
         if (!current_user_can('manage_api_users')) {
@@ -66,6 +77,11 @@ class User_Controller {
 
         if (!$user) {
             return new WP_Error('rest_user_not_found', __('User not found.', 'ahoi-api'), ['status' => 404]);
+        }
+
+        // SECURITY: Prevent a non-admin from viewing an admin's profile.
+        if (in_array('administrator', $user->roles) && !current_user_can('administrator')) {
+             return new WP_Error('rest_forbidden', __('You do not have permission to view administrator accounts.', 'ahoi-api'), ['status' => 403]);
         }
         
         $response_data = [
@@ -80,17 +96,34 @@ class User_Controller {
 
     /**
      * Updates an existing user's data (email and role).
+     * Prevents non-admins from editing admins.
      */
     public function update_user(WP_REST_Request $request) {
         if (!current_user_can('manage_api_users')) {
             return new WP_Error('rest_forbidden', __('You do not have permission to update this user.', 'ahoi-api'), ['status' => 403]);
         }
         
-        $user_id = (int) $request['id'];
+        $user_id_to_edit = (int) $request['id'];
+        $user_to_edit = get_userdata($user_id_to_edit);
+
+        if (!$user_to_edit) {
+            return new WP_Error('rest_user_not_found', __('User not found.', 'ahoi-api'), ['status' => 404]);
+        }
+
+        // SECURITY: Prevent a non-admin from editing an admin.
+        if (in_array('administrator', $user_to_edit->roles) && !current_user_can('administrator')) {
+            return new WP_Error('rest_forbidden', __('You do not have permission to edit administrator accounts.', 'ahoi-api'), ['status' => 403]);
+        }
+        
         $params = $request->get_json_params();
 
+        // SECURITY: Prevent a non-admin from promoting a user to admin.
+        if (isset($params['role']) && $params['role'] === 'administrator' && !current_user_can('administrator')) {
+            return new WP_Error('rest_forbidden', __('You do not have permission to assign the administrator role.', 'ahoi-api'), ['status' => 403]);
+        }
+
         // Update core user data
-        $user_data = ['ID' => $user_id];
+        $user_data = ['ID' => $user_id_to_edit];
         if (isset($params['email'])) {
             $user_data['user_email'] = sanitize_email($params['email']);
         }
@@ -98,8 +131,7 @@ class User_Controller {
 
         // Update user role
         if (isset($params['role'])) {
-            $user = new \WP_User($user_id);
-            $user->set_role(sanitize_text_field($params['role']));
+            $user_to_edit->set_role(sanitize_text_field($params['role']));
         }
         
         return new WP_REST_Response(['success' => true, 'message' => 'User updated successfully.'], 200);
@@ -107,7 +139,7 @@ class User_Controller {
 
     /**
      * Retrieves a list of available roles.
-     * MODIFIED: Managers will not see default WordPress roles.
+     * Managers will not see default WordPress roles.
      */
     public function get_roles(WP_REST_Request $request) {
         if (!current_user_can('manage_api_users')) {
@@ -130,7 +162,7 @@ class User_Controller {
     
     /**
      * Deletes a user.
-     * MODIFIED: Only administrators can delete users.
+     * Only administrators can delete users.
      */
     public function delete_user(WP_REST_Request $request) {
         // Stricter check: Only allow administrators to delete.
